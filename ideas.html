@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Timeline ideas</title>
+
+<style type="text/css">
+  html {
+    --gray-1: #f2f2f2;
+    --gray-2: #eeeeee;
+    --gray-3: #cccccc;
+    --red: #ff3633;
+    --green: #2cab21;
+    --blue: #3d87f5;
+    --purple: #8d3df5;
+    --yellow: #ffae00;
+    --white: #fff;
+
+    --light-red: #ffcdcc;
+    --light-orange: #fce2cf;
+    --light-yellow: #ffefcc;
+    --light-green: #d7f7d4;
+    --light-blue: #e7f0fd;
+    --light-purple: #e2cffc;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    padding: 1rem;
+  }
+
+  .series {
+    display: flex;
+    height: 3rem;
+    position: relative;
+  }
+
+  .work {
+    background-color: var(--gray-1);
+    border: 1px solid var(--gray-3);
+    border-right-style: dotted;
+    position: absolute;
+    height: 100%;
+  }
+
+  .state-update {
+    padding: 0.125rem;
+    transform: rotate(45deg);
+    background-color: var(--white);
+    position: absolute;
+    top: 0.25rem;
+  }
+  .state-update > div {
+    height: 0.5rem;
+    width: 0.5rem;
+    background-color: var(--purple);
+  }
+
+  .suspend {
+    height: 0.5rem;
+    width: 0.5rem;
+    border-radius: 0.5rem;
+    box-sizing: content-box;
+    border: 0.125rem solid var(--white);
+    background-color: var(--green);
+    position: absolute;
+    bottom: 0.25rem;
+  }
+</style>
+</head>
+<body>
+<div class="series">
+  <!-- Renders and commits -->
+  <div class="work" style="width: 200px;"></div>
+  <div class="work" style="width: 100px; left: 260px;"></div>
+
+  <!-- State updates -->
+  <div class="state-update" title="Root level render" style="left: -0.375rem;">
+    <div>&nbsp;</div>
+  </div>
+  <div class="state-update" title="Component updated state
+in List (at App.js:14)
+in App (at src/index.js:7" style="left: 450px;">
+    <div>&nbsp;</div>
+  </div>
+
+  <!-- Suspends -->
+  <div class="suspend" title="Component suspended:
+in List (at App.js:14)
+in App (at src/index.js:7" style="left: calc(200px - 0.375rem);"></div>
+</div>
+</body>
+</html>

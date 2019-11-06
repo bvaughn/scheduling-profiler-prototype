@@ -1,0 +1,40 @@
+.Thread {
+  display: flex;
+  height: 3.5rem;
+}
+
+.Markers {
+  display: flex;
+  flex: 1;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--lighter-gray),
+    var(--lighter-gray) var(--marker-gap-size),
+    var(--white) calc(var(--marker-gap-size) + 1px),
+    var(--white) calc(2 * var(--marker-gap-size))
+  );
+  padding: 0.75rem 0;
+}
+
+.Container {
+  flex: 1;
+  position: relative;
+}
+
+.LabelGroup {
+  width: var(--thread-label-size);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.Header {
+  font-size: 0.65rem;
+  line-height: 1.25;
+}
+
+.Priority {
+  font-weight: bold;
+  line-height: 1.25;
+}

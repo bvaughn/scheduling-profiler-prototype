@@ -1,0 +1,16 @@
+.Outer {
+  transform: translate(-50%, -50%) rotate(45deg);
+  background-color: var(--white);
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  border-radius: var(--border-size);
+  padding: var(--border-size);
+}
+
+.Inner {
+  height: 0.45rem;
+  width: 0.45rem;
+  background-color: var(--purple);
+  border-radius: var(--border-size);
+}

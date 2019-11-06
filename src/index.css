@@ -11,3 +11,28 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+
+html {
+  --gray: rgba(0,0,0,.2);
+  --red: #ff3633;
+  --green: #2cab21;
+  --blue: #3d87f5;
+  --purple: #8d3df5;
+  --yellow: #ffae00;
+  --white: #fff;
+
+  --light-gray: rgba(0,0,0,.1);
+  --lighter-gray: rgba(0,0,0,.05);
+  --light-red: #ffcdcc;
+  --light-orange: #fce2cf;
+  --light-yellow: #ffefcc;
+  --light-green: #d7f7d4;
+  --light-blue: #e7f0fd;
+  --light-purple: #e2cffc;
+
+  --multiplier: 5;
+  --framerate: 16.667px;
+  --border-size: 2px;
+  --thread-label-size: 7rem;
+  --marker-gap-size: calc(var(--framerate) * var(--multiplier));
+}

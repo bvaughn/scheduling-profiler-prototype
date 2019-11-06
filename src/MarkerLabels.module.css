@@ -1,0 +1,15 @@
+.Labels {
+  display: flex;
+  flex-direction: row;
+  margin-left: calc(var(--thread-label-size) - var(--marker-gap-size) / 2);
+  overflow: hidden;
+}
+
+.Label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 var(--marker-gap-size);
+  font-size: 0.65rem;
+  overflow: hidden;
+}

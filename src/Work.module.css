@@ -1,0 +1,31 @@
+.Work {
+  background-color: var(--gray);
+  position: absolute;
+  border-radius: calc(2 * var(--border-size));
+  height: 100%;
+  z-index: 1;
+}
+
+.DidDeopt {
+  background-color: var(--red);
+}
+
+.DidResume {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.DidYield {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.YieldStyle {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--gray),
+    var(--gray) 3px,
+    var(--light-gray) 3px,
+    var(--light-gray) 6px
+  );
+}
