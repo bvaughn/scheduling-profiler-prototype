@@ -1,0 +1,12 @@
+.RenderIdle {
+  position: absolute;
+  height: 100%;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--white),
+    var(--white) 2px,
+    var(--light-blue) 2px,
+    var(--light-blue) 4px
+  );
+}

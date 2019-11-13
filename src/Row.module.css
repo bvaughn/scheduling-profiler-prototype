@@ -1,0 +1,7 @@
+.Row {
+  height: var(--row-size);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+}

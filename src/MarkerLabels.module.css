@@ -1,7 +1,7 @@
 .Labels {
   display: flex;
   flex-direction: row;
-  margin-left: calc(var(--thread-label-size) - var(--marker-gap-size) / 2);
+  margin-left: calc(var(--label-size) - var(--marker-gap-size) / 2);
   overflow: hidden;
 }
 

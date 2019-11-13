@@ -11,6 +11,7 @@ export default function Work({
   startTime,
   stopTime,
   showYieldStyle = false,
+  type = 'render' | 'commit' | 'other'
 }) {
   const priorityLabel = useContext(PriorityContext);
 
@@ -29,8 +30,8 @@ export default function Work({
     >
       <div
         style={{
-          left: `calc(${startTime}px * var(--multiplier))`,
-          width: `calc(${stopTime - startTime}px * var(--multiplier))`
+          left: `calc(${startTime}px * var(--scale))`,
+          width: `calc(${stopTime - startTime}px * var(--scale))`
         }}
         className={[
           styles.Work,
@@ -38,6 +39,9 @@ export default function Work({
           didResume && styles.DidResume,
           didYield && styles.DidYield,
           didYield && showYieldStyle && styles.YieldStyle,
+          type === 'commit' && styles.TypeCommit,
+          type === 'other' && styles.TypeOther,
+          type === 'render' && styles.TypeRender,
         ].join(' ')}
       >
         {children}

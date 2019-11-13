@@ -4,7 +4,7 @@ import ComponentStack from './ComponentStack';
 import styles from './EventSuspended.module.css';
 
 export default function EventSuspended({
-  componentStack,
+  componentStack = '',
   timestamp,
 }) {
   return (
@@ -12,7 +12,7 @@ export default function EventSuspended({
       content={
         <Fragment>
           <p>Component <strong>suspended</strong> at {timestamp}ms</p>
-          <ComponentStack componentStack={componentStack} />
+          {componentStack && <ComponentStack componentStack={componentStack.trim()} />}
         </Fragment>
       }
       trigger="hover"
@@ -21,7 +21,7 @@ export default function EventSuspended({
       <div
         className={styles.Outer}
         style={{
-          left: `calc(${timestamp}px * var(--multiplier))`,
+          left: `calc(${timestamp}px * var(--scale) - var(--x-offset))`,
         }}
       ></div>
     </Popover>

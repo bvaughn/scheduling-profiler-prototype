@@ -1,3 +1,14 @@
+Tasks:
+* Add logging to react-reconciler and scheduler packages
+  * Sync and make sure logging is working within FB
+* Design public API (if we want one) for auto-tracking and logging these new data points
+* Parse Chrome (and Firefox?) performance profile JSON output (https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#)
+  * Filter unsupported events
+  * Massage data slightly (join micro-yielded tasks)
+* Create visualization (chart) UI for data
+* Create zoom-and-pan controls
+
+
 * User timings API for scheduler start/stop at priority
   Currently it uses a call stack (logEvent) but we could feature flag switch for performance.now()
   Gap between markSchedulerSuspended and markSchedulerUnsuspended is unscheduled JS ("Main thread")
@@ -9,6 +20,21 @@
 * Unsupported: Multi-root (interleaved)
 * How can we detect that a root is throwing away work without committing? checkForInterruption()
   But we'd also need to compare roots (it's not currently comparing wIPR to root)
+
+---------------
+
+Scheduler:
+* --scheduler-start-<PriorityLevel>
+* --scheduler-stop-<PriorityLevel>
+
+React:
+* start|resume render (root)
+* finish|yield render (root)
+* abandon render
+* start commit
+* finish commit
+* suspend <componentStack>
+* schedule work <componentStack>
 
 ---------------
 

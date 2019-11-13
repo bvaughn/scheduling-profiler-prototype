@@ -9,8 +9,8 @@ export default function Blocking({
   return (
     <div
       style={{
-        left: `calc(${startTime}px * var(--multiplier))`,
-        width: `calc(${stopTime - startTime}px * var(--multiplier))`
+        left: `calc(${startTime}px * var(--scale))`,
+        width: `calc(${stopTime - startTime}px * var(--scale))`
       }}
       className={styles.Blocking}
     >

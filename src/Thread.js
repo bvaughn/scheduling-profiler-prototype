@@ -9,7 +9,6 @@ export default function Thread({
   return (
     <div className={styles.Thread}>
       <label className={styles.LabelGroup}>
-        <div className={styles.Header}>Priority</div>
         <div className={styles.Priority}>{priorityLabel}</div>
       </label>
       <div className={styles.Markers}>

@@ -1,7 +1,6 @@
 .Work {
   background-color: var(--gray);
   position: absolute;
-  border-radius: calc(2 * var(--border-size));
   height: 100%;
   z-index: 1;
 }
@@ -18,6 +17,27 @@
 .DidYield {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
+}
+
+.TypeRender {
+  background-color: var(--blue);
+}
+.TypeRender:hover {
+  opacity: 0.8;
+}
+
+.TypeCommit {
+  background-color: var(--red);
+}
+.TypeCommit:hover {
+  opacity: 0.8;
+}
+
+.TypeOther {
+  background-color: var(--gray);
+}
+.TypeOther:hover {
+  opacity: 0.8;
 }
 
 .YieldStyle {

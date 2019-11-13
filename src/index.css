@@ -21,6 +21,8 @@ html {
   --yellow: #ffae00;
   --white: #fff;
 
+  --medium-blue: #9ec3fa;
+
   --light-gray: rgba(0,0,0,.1);
   --lighter-gray: rgba(0,0,0,.05);
   --light-red: #ffcdcc;
@@ -30,9 +32,11 @@ html {
   --light-blue: #e7f0fd;
   --light-purple: #e2cffc;
 
-  --multiplier: 5;
+  --scale: 1;
+  --x-offset: 0px;
   --framerate: 16.667px;
+  --row-size: 3.5rem;
+  --label-size: 7rem;
   --border-size: 2px;
-  --thread-label-size: 7rem;
-  --marker-gap-size: calc(var(--framerate) * var(--multiplier));
+  --marker-gap-size: calc(var(--framerate) * var(--scale));
 }

@@ -1,0 +1,15 @@
+.RenderWork {
+  position: absolute;
+  height: 100%;
+  z-index: 1;
+  background-color: var(--medium-blue);
+}
+.RenderWork:hover {
+  opacity: 0.8;
+}
+
+.DidResume {
+}
+
+.DidYield {
+}

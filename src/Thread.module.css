@@ -9,9 +9,9 @@
   background: repeating-linear-gradient(
     90deg,
     var(--lighter-gray),
-    var(--lighter-gray) var(--marker-gap-size),
-    var(--white) calc(var(--marker-gap-size) + 1px),
-    var(--white) calc(2 * var(--marker-gap-size))
+    var(--lighter-gray) 4rem,
+    var(--white) 4rem,
+    var(--white) 8rem
   );
   padding: 0.75rem 0;
 }
@@ -22,7 +22,7 @@
 }
 
 .LabelGroup {
-  width: var(--thread-label-size);
+  width: var(--label-size);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
