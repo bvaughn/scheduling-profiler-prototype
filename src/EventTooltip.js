@@ -10,6 +10,30 @@ export default function EventTooltip({ hoveredEvent, state }) {
   const { canvasMouseY, canvasMouseX } = state;
   const { duration, timestamp, type } = hoveredEvent;
 
+  let label = null;
+  switch (type) {
+    case 'commit-work':
+      label = 'commit';
+      break;
+    case 'non-react-function-call':
+      label = 'other script';
+      break;
+    case 'render-idle':
+      label = 'idle';
+      break;
+    case 'render-work':
+      label = 'render';
+      break;
+    case 'schedule-render':
+      label = 'render scheduled';
+      break;
+    case 'schedule-state-update':
+      label = 'state update scheduled';
+      break;
+    default:
+      break;
+  }
+
   return (
     <div
       className={styles.Tooltip}
@@ -19,7 +43,7 @@ export default function EventTooltip({ hoveredEvent, state }) {
         left: canvasMouseX + TOOLTIP_OFFSET,
       }}
     >
-      {type.replace('-work', '')} at {timestamp}ms - {timestamp + duration}ms
+      {duration}ms {label !== null ? `(${label})` : ''}
     </div>
   );
 }
