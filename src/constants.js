@@ -1,6 +1,7 @@
 export const BAR_X_GUTTER = 1;
 
 export const TOOLTIP_OFFSET = 8;
+export const MARKER_TEXT_OFFSET = 4;
 
 export const INTERVAL_TIMES = [
   10,

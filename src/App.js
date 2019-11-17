@@ -1,14 +1,13 @@
 import React, { Fragment, useLayoutEffect, useRef } from 'react';
 import usePanAndZoom from './usePanAndZoom';
 import { getCanvasContext } from './canvasUtils';
-import { timestampToPosition } from './usePanAndZoom';
+import { positionToTimestamp, timestampToPosition } from './usePanAndZoom';
 import useHoveredEvent from './useHoveredEvent';
-import EventHighlight from './EventHighlight';
 import EventTooltip from './EventTooltip';
 import preprocessData from './preprocessData';
 import styles from './App.module.css';
 import AutoSizer from "react-virtualized-auto-sizer";
-import { BAR_X_GUTTER, INTERVAL_TIMES, MAX_INTERVAL_SIZE_PX } from './constants';
+import { BAR_X_GUTTER, INTERVAL_TIMES, MARKER_TEXT_OFFSET, MAX_INTERVAL_SIZE_PX } from './constants';
 
 // https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#
 import profileJSON from './big-data.json';
@@ -34,7 +33,7 @@ function getTimeTickInterval(canvasWidth, unscaledContentWidth, zoomLevel) {
   return interval;
 }
 
-const renderCanvas = (canvas, state) => {
+const renderCanvas = (canvas, state, hoveredEvent) => {
   const context = getCanvasContext(canvas, true);
 
   const canvasHeight = canvas.height / 2;
@@ -46,11 +45,18 @@ const renderCanvas = (canvas, state) => {
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   const interval = getTimeTickInterval(canvasWidth, unscaledContentWidth, zoomLevel);
-  const intervalSize = Math.round(interval * zoomLevel);
+  const intervalSize = interval * zoomLevel;
   const firstIntervalPosition = 0 - offsetX + Math.floor(offsetX / intervalSize) * intervalSize;
   for (let i = firstIntervalPosition; i < canvasWidth; i += intervalSize) {
     context.fillStyle = '#dddddd';
     context.fillRect(i, 0, 1, canvasHeight);
+
+    const markerTimestamp = positionToTimestamp(i, offsetX, zoomLevel);
+    const markerLabel = Math.round(markerTimestamp);
+
+    context.font = '10px Lucida Grande';
+    context.fillStyle = 'black';
+    context.fillText(`${markerLabel}ms`, i + MARKER_TEXT_OFFSET, 10 + MARKER_TEXT_OFFSET);
   }
 
   events.forEach(event => {
@@ -83,20 +89,28 @@ const renderCanvas = (canvas, state) => {
     let y = null;
     switch (type) {
       case 'commit-work':
-        color = '#ff3633';
-        y = 0.2;
+        color = event === hoveredEvent
+          ? '#dd1411'
+          : '#ff3633';
+        y = 0.3;
         break;
       case 'render-idle':
-        color = '#e7f0fe';
-        y = 0.2;
+        color = event === hoveredEvent
+          ? '#c5d0dc'
+          : '#e7f0fe';
+        y = 0.3;
         break;
       case 'render-work':
-        color = '#3e87f5';
-        y = 0.2;
+        color = event === hoveredEvent
+          ? '#1c65d3'
+          : '#3e87f5';
+        y = 0.3;
         break;
       case 'non-react-function-call':
-        color = '#656565';
-        y = 0.6;
+        color = event === hoveredEvent
+          ? '#434343'
+          : '#656565';
+        y = 0.65;
         break;
       default:
         console.warn(`Unexpected type "${type}"`);
@@ -146,7 +160,7 @@ function AppWithWidth({ width }) {
     state
   });
 
-  useLayoutEffect(() => renderCanvas(canvasRef.current, state));
+  useLayoutEffect(() => renderCanvas(canvasRef.current, state, hoveredEvent));
 
   return (
     <div
@@ -161,11 +175,6 @@ function AppWithWidth({ width }) {
         className={styles.Canvas}
         height={CANVAS_HEIGHT}
         width={width}
-      />
-      <EventHighlight
-        canvasHeight={CANVAS_HEIGHT}
-        hoveredEvent={hoveredEvent}
-        state={state}
       />
       <EventTooltip
         hoveredEvent={hoveredEvent}
