@@ -5,18 +5,8 @@
   overflow-y: auto;
 }
 
-.Labels {
-  flex: 0 0 var(--label-size);
-}
-
-.Label {
-  font-weight: bold;
-  padding: 0.5rem;
-}
-
-.Events {
-  flex-grow: 1;
-  overflow-x: auto;
+.Container {
+  position: relative;
 }
 
 .Canvas {

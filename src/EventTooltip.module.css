@@ -5,8 +5,3 @@
   padding: 0.25rem 0.5rem;
   user-select: none;
 }
-
-.Highlight {
-  pointer-events: none;
-  border: 1px solid black;
-}

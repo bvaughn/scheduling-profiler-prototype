@@ -2,9 +2,11 @@ import React, { Fragment, useLayoutEffect, useRef } from 'react';
 import usePanAndZoom from './usePanAndZoom';
 import { getCanvasContext } from './canvasUtils';
 import { timestampToPosition } from './usePanAndZoom';
-import Tooltip from './Tooltip';
+import useHoveredEvent from './useHoveredEvent';
+import EventHighlight from './EventHighlight';
+import EventTooltip from './EventTooltip';
 import preprocessData from './preprocessData';
-import style from './App.module.css';
+import styles from './App.module.css';
 import AutoSizer from "react-virtualized-auto-sizer";
 import { BAR_X_GUTTER, INTERVAL_TIMES, MAX_INTERVAL_SIZE_PX } from './constants';
 
@@ -47,7 +49,7 @@ const renderCanvas = (canvas, state) => {
   const intervalSize = Math.round(interval * zoomLevel);
   const firstIntervalPosition = 0 - offsetX + Math.floor(offsetX / intervalSize) * intervalSize;
   for (let i = firstIntervalPosition; i < canvasWidth; i += intervalSize) {
-    context.fillStyle = '#eeeeee';
+    context.fillStyle = '#dddddd';
     context.fillRect(i, 0, 1, canvasHeight);
   }
 
@@ -81,19 +83,19 @@ const renderCanvas = (canvas, state) => {
     let y = null;
     switch (type) {
       case 'commit-work':
-        color = '#3d87f5';
+        color = '#ff3633';
         y = 0.2;
         break;
       case 'render-idle':
-        color = '#f0f0f0';
+        color = '#e7f0fe';
         y = 0.2;
         break;
       case 'render-work':
-        color = '#e7f0fd';
+        color = '#3e87f5';
         y = 0.2;
         break;
       case 'non-react-function-call':
-        color = '#cccccc';
+        color = '#656565';
         y = 0.6;
         break;
       default:
@@ -122,12 +124,12 @@ const renderCanvas = (canvas, state) => {
 function App() {
   return (
     <AutoSizer disableHeight>
-      {({ width }) => <AutoSizedCanvas width={width} />}
+      {({ width }) => <AppWithWidth width={width} />}
     </AutoSizer>
   );
 }
 
-function AutoSizedCanvas({ width }) {
+function AppWithWidth({ width }) {
   const canvasRef = useRef();
 
   const lastEvent = events[events.length - 1];
@@ -137,24 +139,39 @@ function AutoSizedCanvas({ width }) {
       : lastEvent.timestamp;
 
   const state = usePanAndZoom(canvasRef, lastTime);
+  const hoveredEvent = useHoveredEvent({
+    canvasHeight: CANVAS_HEIGHT,
+    canvasWidth: width,
+    events,
+    state
+  });
 
   useLayoutEffect(() => renderCanvas(canvasRef.current, state));
 
   return (
-    <Fragment>
+    <div
+      className={styles.Container}
+      style={{
+        height: CANVAS_HEIGHT,
+        width: width,
+      }}
+    >
       <canvas
         ref={canvasRef}
-        className={style.Canvas}
+        className={styles.Canvas}
         height={CANVAS_HEIGHT}
         width={width}
       />
-      <Tooltip
+      <EventHighlight
         canvasHeight={CANVAS_HEIGHT}
-        canvasWidth={width}
-        events={events}
+        hoveredEvent={hoveredEvent}
         state={state}
       />
-    </Fragment>
+      <EventTooltip
+        hoveredEvent={hoveredEvent}
+        state={state}
+      />
+    </div>
   );
 }
 
