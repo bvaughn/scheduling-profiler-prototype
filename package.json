@@ -5,7 +5,7 @@
   "dependencies": {
     "antd": "^3.25.0",
     "lodash.debounce": "^4.0.8",
-    "lodash.memoize": "^4.1.2",
+    "memoize-one": "^5.1.1",
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
     "react-scripts": "3.2.0",

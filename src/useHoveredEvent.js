@@ -4,7 +4,7 @@ import { positionToTimestamp } from './usePanAndZoom';
 export default function useHoveredEvent({
   canvasHeight,
   canvasWidth,
-  events,
+  eventQueue,
   state
 }) {
   const {
@@ -17,18 +17,18 @@ export default function useHoveredEvent({
   let hoveredEvent = null;
 
   const lastResultRef = useRef({
-    events,
+    eventQueue,
     hoveredEvent,
   });
 
   useEffect(() => {
     lastResultRef.current = {
-      events,
+      eventQueue,
       hoveredEvent: hoveredEvent || null,
     };
   });
 
-  if (events === null) {
+  if (eventQueue === null) {
     return null;
   }
 
@@ -40,11 +40,11 @@ export default function useHoveredEvent({
   ) {
     // Small mouse movements won't change the hovered event,
     // So always start by checking the last hovered event to see if we can avoid doing more work.
-    const lastEvents = lastResultRef.current.events;
+    const lastEvents = lastResultRef.current.eventQueue;
     const lastHoveredEvent = lastResultRef.current.hoveredEvent;
     if (
       lastHoveredEvent !== null &&
-      lastEvents === events &&
+      lastEvents === eventQueue &&
       timestampAtMouseX >= lastHoveredEvent.timestamp &&
       timestampAtMouseX <= lastHoveredEvent.timestamp + lastHoveredEvent.duration
     ) {
@@ -54,10 +54,10 @@ export default function useHoveredEvent({
 
     // Since event data is sorted, we can use a binary search for faster comparison.
     let indexLow = 0;
-    let indexHigh = events.length - 1;
+    let indexHigh = eventQueue.length - 1;
     let index = Math.round(indexHigh / 2);
     while (index < indexHigh && index > indexLow && hoveredEvent === null) {
-      const event = events[index];
+      const event = eventQueue[index];
       const {
         duration,
         timestamp: startTime

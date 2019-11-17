@@ -1,22 +1,26 @@
 import React, { Fragment, useLayoutEffect, useRef } from 'react';
+import memoize from 'memoize-one';
 import usePanAndZoom from './usePanAndZoom';
 import { getCanvasContext } from './canvasUtils';
 import { positionToTimestamp, timestampToPosition } from './usePanAndZoom';
 import useHoveredEvent from './useHoveredEvent';
+import EventHighlight from './EventHighlight';
 import EventTooltip from './EventTooltip';
 import preprocessData from './preprocessData';
 import styles from './App.module.css';
 import AutoSizer from "react-virtualized-auto-sizer";
-import { INTERVAL_TIMES, MAX_INTERVAL_SIZE_PX } from './constants';
+import {
+  BAR_HEIGHT,
+  BAR_HORIZONTAL_SPACING,
+  BAR_GUTTER_SIZE,
+  INTERVAL_TIMES,
+  MARKER_HEIGHT,
+  MARKER_GUTTER_SIZE,
+  MAX_INTERVAL_SIZE_PX,
+} from './constants';
 
 // https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#
 import profileJSON from './big-data.json';
-
-const MARKER_HEIGHT = 10;
-const MARKER_GUTTER_SIZE = 4;
-const BAR_HEIGHT = 20;
-const BAR_HORIZONTAL_SPACING = 1;
-const BAR_GUTTER_SIZE = 10;
 
 const priorities = ['unscheduled', 'high', 'normal', 'low'];
 
@@ -73,31 +77,26 @@ function positionToEventQueue(mouseY) {
     y += BAR_GUTTER_SIZE;
 
     if (mouseY >= y && mouseY <= y + BAR_HEIGHT) {
-      return currentPriority.react;
+      return [currentPriority.react, y];
     }
 
     y += BAR_HEIGHT + BAR_GUTTER_SIZE;
 
     if (mouseY >= y && mouseY <= y + BAR_HEIGHT) {
-      return currentPriority.other;
+      return [currentPriority.other, y];
     }
 
     y += BAR_HEIGHT + BAR_GUTTER_SIZE;
   }
 
-  return null;
+  return [null, null];
 }
 
-// TODO Maybe I could memoize canvas rendering if the only thing that's changed is the mouse X/Y coordinates.
-// This would mean that I'd have to give up coloring the hovered element differently (or just render that with React)
-// but that might be the right trade off.
-const renderCanvas = (canvas, state, hoveredEvent) => {
+const renderCanvas = memoize((canvas, unscaledContentWidth, offsetX, zoomLevel) => {
   const context = getCanvasContext(canvas, true);
 
   const canvasHeight = canvas.height / 2;
   const canvasWidth = canvas.width / 2;
-
-  const { offsetX, unscaledContentWidth, zoomLevel } = state;
 
   context.fillStyle = '#ffffff';
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -126,16 +125,6 @@ const renderCanvas = (canvas, state, hoveredEvent) => {
 
   priorities.forEach((priority, priorityIndex) => {
     const currentPriority = events[priority];
-
-    if (priorityIndex % 2 === 0) {
-      context.fillStyle = 'rgba(0,0,0,.02)';
-      context.fillRect(
-        Math.floor(0),
-        Math.floor(y),
-        Math.floor(canvasWidth),
-        Math.floor(threadHeight),
-      );
-    }
 
     y += BAR_GUTTER_SIZE;
 
@@ -166,19 +155,13 @@ const renderCanvas = (canvas, state, hoveredEvent) => {
       let color = null;
       switch (type) {
         case 'commit-work':
-          color = event === hoveredEvent
-            ? '#dd1411'
-            : '#ff3633';
+          color = '#ff3633';
           break;
         case 'render-idle':
-          color = event === hoveredEvent
-            ? '#c5d0dc'
-            : '#e7f0fe';
+          color = '#e7f0fe';
           break;
         case 'render-work':
-          color = event === hoveredEvent
-            ? '#1c65d3'
-            : '#3e87f5';
+          color = '#3e87f5';
           break;
         default:
           console.warn(`Unexpected type "${type}"`);
@@ -216,9 +199,7 @@ const renderCanvas = (canvas, state, hoveredEvent) => {
         return; // Not in view
       }
 
-      context.fillStyle = event === hoveredEvent
-        ? '#434343'
-        : '#656565';
+      context.fillStyle = '#656565';
 
       context.fillRect(
         Math.floor(x),
@@ -230,7 +211,7 @@ const renderCanvas = (canvas, state, hoveredEvent) => {
 
     y += BAR_HEIGHT + BAR_GUTTER_SIZE;
   });
-};
+});
 
 function App() {
   return (
@@ -254,14 +235,24 @@ function AppWithWidth({ width }) {
   const canvasRef = useRef();
 
   const state = usePanAndZoom(canvasRef, events.duration);
+
+  const [eventQueue, y] = positionToEventQueue(state.canvasMouseY);
+
   const hoveredEvent = useHoveredEvent({
     canvasHeight,
     canvasWidth: width,
-    events: positionToEventQueue(state.canvasMouseY),
+    eventQueue,
     state,
   });
 
-  useLayoutEffect(() => renderCanvas(canvasRef.current, state, hoveredEvent));
+  useLayoutEffect(() => {
+    renderCanvas(
+      canvasRef.current,
+      state.unscaledContentWidth,
+      state.offsetX,
+      state.zoomLevel,
+    )
+  });
 
   return (
     <div
@@ -276,6 +267,12 @@ function AppWithWidth({ width }) {
         className={styles.Canvas}
         height={canvasHeight}
         width={width}
+      />
+      <EventHighlight
+        hoveredEvent={hoveredEvent}
+        height={BAR_HEIGHT}
+        state={state}
+        y={y}
       />
       <EventTooltip
         hoveredEvent={hoveredEvent}

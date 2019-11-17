@@ -1,3 +1,9 @@
+export const MARKER_HEIGHT = 10;
+export const MARKER_GUTTER_SIZE = 4;
+export const BAR_HEIGHT = 20;
+export const BAR_HORIZONTAL_SPACING = 1;
+export const BAR_GUTTER_SIZE = 10;
+
 export const INTERVAL_TIMES = [
   10,
   20,

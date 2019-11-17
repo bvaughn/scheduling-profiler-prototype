@@ -1,4 +1,4 @@
-import memoize from 'lodash.memoize';
+import memoize from 'memoize-one';
 
 // hidpi canvas: https://www.html5rocks.com/en/tutorials/canvas/hidpi/
 export function configureRetinaCanvas(canvas) {
