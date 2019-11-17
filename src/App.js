@@ -95,6 +95,55 @@ function positionToEventQueue(mouseY) {
   return [null, null];
 }
 
+let cachedIdlePattern = null;
+function getIdlePattern() {
+  if (cachedIdlePattern === null) {
+    // https://stackoverflow.com/questions/32201479/continuous-hatch-line-needed-in-canvas-with-repeated-pattern
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    const CANVAS_SIDE_LENGTH = 8;
+    const WIDTH = CANVAS_SIDE_LENGTH;
+    const HEIGHT = CANVAS_SIDE_LENGTH;
+    const DIVISIONS = 4;
+
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+    context.fillStyle = '#e7f0fe';
+
+    // Top line
+    context.beginPath();
+    context.moveTo(0, HEIGHT * (1 / DIVISIONS));
+    context.lineTo(WIDTH * (1 / DIVISIONS), 0);
+    context.lineTo(0, 0);
+    context.lineTo(0, HEIGHT * (1 / DIVISIONS));
+    context.fill();
+
+    // Middle line
+    context.beginPath();
+    context.moveTo(WIDTH, HEIGHT * (1 / DIVISIONS));
+    context.lineTo(WIDTH * (1 / DIVISIONS), HEIGHT);
+    context.lineTo(0, HEIGHT);
+    context.lineTo(0, HEIGHT * ((DIVISIONS - 1) / DIVISIONS));
+    context.lineTo(WIDTH * ((DIVISIONS - 1) / DIVISIONS), 0);
+    context.lineTo(WIDTH, 0);
+    context.lineTo(WIDTH, HEIGHT * (1 / DIVISIONS));
+    context.fill();
+
+    // Bottom line
+    context.beginPath();
+    context.moveTo(WIDTH, HEIGHT * ((DIVISIONS - 1) / DIVISIONS));
+    context.lineTo(WIDTH * ((DIVISIONS - 1) / DIVISIONS), HEIGHT);
+    context.lineTo(WIDTH, HEIGHT);
+    context.lineTo(WIDTH, HEIGHT * ((DIVISIONS - 1) / DIVISIONS));
+    context.fill();
+
+    cachedIdlePattern = canvas;
+  }
+
+  return cachedIdlePattern;
+}
+
 const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLevel) => {
   const context = getCanvasContext(canvas, canvasWidth, true);
 
@@ -135,7 +184,7 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
       const markerLabel = Math.round(markerTimestamp);
 
       context.font = `${MARKER_HEIGHT}px Lucida Grande`;
-      context.fillStyle = 'black';
+      context.fillStyle = '#000000';
       context.textAlign = 'right';
       context.fillText(`${markerLabel}ms`, i - MARKER_GUTTER_SIZE, y + MARKER_HEIGHT);
     }
@@ -179,7 +228,7 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
           color = '#ff3633';
           break;
         case 'render-idle':
-          color = '#e7f0fe';
+          color = context.createPattern(getIdlePattern(), 'repeat');
           break;
         case 'render-work':
           color = '#3e87f5';
