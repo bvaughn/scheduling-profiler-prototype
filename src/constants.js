@@ -4,6 +4,7 @@ export const BAR_SEPARATOR_SIZE = 4;
 export const BAR_HEIGHT = 20;
 export const BAR_HORIZONTAL_SPACING = 1;
 export const BAR_GUTTER_SIZE = 10;
+export const EVENT_SIZE = 6;
 
 export const INTERVAL_TIMES = [
   10,

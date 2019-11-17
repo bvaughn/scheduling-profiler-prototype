@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { positionToTimestamp } from './usePanAndZoom';
+import { EVENT_SIZE } from './constants';
 
 export default function useHoveredEvent({
   canvasHeight,
@@ -32,6 +33,7 @@ export default function useHoveredEvent({
     return null;
   }
 
+  const eventSizeInMS = EVENT_SIZE / zoomLevel;
   const timestampAtMouseX = positionToTimestamp(canvasMouseX, offsetX, zoomLevel);
 
   if (
@@ -42,6 +44,7 @@ export default function useHoveredEvent({
     // So always start by checking the last hovered event to see if we can avoid doing more work.
     const lastEvents = lastResultRef.current.eventQueue;
     const lastHoveredEvent = lastResultRef.current.hoveredEvent;
+    // TODO Handle events too
     if (
       lastHoveredEvent !== null &&
       lastEvents === eventQueue &&
@@ -60,18 +63,28 @@ export default function useHoveredEvent({
       const middle = Math.floor((start + end) / 2);
 
       const event = eventQueue[middle];
-      const {
-        duration,
-        timestamp: startTime
-      } = event;
+      const { duration, timestamp } = event;
 
-      const stopTime = startTime + duration;
+      let startTime = timestamp;
+      let stopTime;
 
-      // TODO This won't find small things (like state-updates)
-      if (timestampAtMouseX >= startTime && timestampAtMouseX <= stopTime) {
-        hoveredEvent = event;
-        break;
+      if (duration !== undefined) {
+        stopTime = startTime + duration;
+
+        if (timestampAtMouseX >= startTime && timestampAtMouseX <= stopTime) {
+          hoveredEvent = event;
+          break;
+        }
+      } else {
+        startTime -= eventSizeInMS / 2;
+        stopTime = startTime + eventSizeInMS;
+
+        if (timestampAtMouseX >= startTime && timestampAtMouseX <= stopTime) {
+          hoveredEvent = event;
+          break;
+        }
       }
+
 
       if (stopTime < timestampAtMouseX) {
         start = middle + 1;

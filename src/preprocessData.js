@@ -2,20 +2,24 @@ export default function preprocessData(rawData) {
   const processedData = {
     duration: 0,
     high: {
-      react: [],
-      other: [],
+      reactWork: [],
+      reactEvents: [],
+      otherWork: [],
     },
     normal: {
-      react: [],
-      other: [],
+      reactWork: [],
+      reactEvents: [],
+      otherWork: [],
     },
     low: {
-      react: [],
-      other: [],
+      reactWork: [],
+      reactEvents: [],
+      otherWork: [],
     },
     unscheduled: {
-      react: [],
-      other: [],
+      reactWork: [],
+      reactEvents: [],
+      otherWork: [],
     },
   };
 
@@ -104,7 +108,7 @@ export default function preprocessData(rawData) {
             }
 
             if (currentMetadata.hasUncommittedWork && currentMetadata.previousStopTime !== null) {
-              currentProcessedGroup.react.push({
+              currentProcessedGroup.reactWork.push({
                 type: 'render-idle',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStopTime,
@@ -122,7 +126,7 @@ export default function preprocessData(rawData) {
             if (currentMetadata.previousStartTime === null) {
               console.warn('unexpected render stop');
             } else {
-              currentProcessedGroup.react.push({
+              currentProcessedGroup.reactWork.push({
                 type: 'render-work',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStartTime,
@@ -139,7 +143,7 @@ export default function preprocessData(rawData) {
             if (currentMetadata.previousStartTime === null) {
               console.warn('unexpected render stop');
             } else {
-              currentProcessedGroup.react.push({
+              currentProcessedGroup.reactWork.push({
                 type: 'render-work',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStartTime,
@@ -156,7 +160,7 @@ export default function preprocessData(rawData) {
             if (currentMetadata.previousStartTime === null) {
               console.warn('unexpected render stop');
             } else {
-              currentProcessedGroup.react.push({
+              currentProcessedGroup.reactWork.push({
                 type: 'render-work',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStartTime,
@@ -180,7 +184,7 @@ export default function preprocessData(rawData) {
               currentMetadata.previousStopTime !== null &&
               currentMetadata.previousStopTime < timestamp
             ) {
-              currentProcessedGroup.react.push({
+              currentProcessedGroup.reactWork.push({
                 type: 'render-idle',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStopTime,
@@ -196,7 +200,7 @@ export default function preprocessData(rawData) {
             if (currentMetadata.previousStartTime === null) {
               console.warn('unexpected commit stop');
             } else {
-              currentProcessedGroup.react.push({
+              currentProcessedGroup.reactWork.push({
                 type: 'commit-work',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStartTime,
@@ -210,11 +214,8 @@ export default function preprocessData(rawData) {
             currentMetadata.previousStartTime = null;
             currentMetadata.previousStopTime = null;
 
-          } else if (name.startsWith('--suspend-')) {
-            // TODO
-
           } else if (name.startsWith('--schedule-render')) {
-            currentProcessedGroup.react.push({
+            currentProcessedGroup.reactEvents.push({
               type: 'schedule-render',
               priority: currentPriority,
               timestamp,
@@ -223,11 +224,21 @@ export default function preprocessData(rawData) {
             processedData.duration = Math.max(processedData.duration, timestamp);
 
           } else if (name.startsWith('--schedule-state-update-')) {
-            currentProcessedGroup.react.push({
+            currentProcessedGroup.reactEvents.push({
               type: 'schedule-state-update',
               priority: currentPriority,
               timestamp,
               componentStack: name.substr(24)
+            });
+
+            processedData.duration = Math.max(processedData.duration, timestamp);
+
+          } else if (name.startsWith('--suspend-')) {
+            currentProcessedGroup.reactEvents.push({
+              type: 'suspend',
+              priority: currentPriority,
+              timestamp,
+              componentStack: name.substr(10)
             });
 
             processedData.duration = Math.max(processedData.duration, timestamp);
@@ -258,7 +269,7 @@ export default function preprocessData(rawData) {
             // TODO This is a flawed approach.
             // FunctionCalls will always be made before/after React starts rendering.
             if (currentMetadata.functionCallStackDepth === 0) {
-              currentProcessedGroup.other.push({
+              currentProcessedGroup.otherWork.push({
                 type: 'non-react-function-call',
                 priority: currentPriority,
                 timestamp,

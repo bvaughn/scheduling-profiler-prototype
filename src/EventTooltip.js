@@ -9,7 +9,7 @@ export default function EventTooltip({ hoveredEvent, state }) {
   }
 
   const { canvasMouseY, canvasMouseX } = state;
-  const { duration, timestamp, type } = hoveredEvent;
+  const { componentStack, duration, timestamp, type } = hoveredEvent;
 
   let label = null;
   switch (type) {
@@ -29,7 +29,10 @@ export default function EventTooltip({ hoveredEvent, state }) {
       label = 'render scheduled';
       break;
     case 'schedule-state-update':
-      label = 'state update scheduled';
+      label = `state update scheduled${componentStack}`
+      break;
+    case 'suspend':
+      label = `suspended${componentStack}`;
       break;
     default:
       break;
@@ -44,7 +47,9 @@ export default function EventTooltip({ hoveredEvent, state }) {
         left: canvasMouseX + TOOLTIP_OFFSET,
       }}
     >
-      {duration}ms {label !== null ? `(${label})` : ''}
+      {duration !== undefined
+        ? `${duration}ms (${label})`
+        : `${label}`}
     </div>
   );
 }

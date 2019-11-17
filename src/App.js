@@ -14,6 +14,7 @@ import {
   BAR_HEIGHT,
   BAR_HORIZONTAL_SPACING,
   BAR_SEPARATOR_SIZE,
+  EVENT_SIZE,
   INTERVAL_TIMES,
   MARKER_GUTTER_SIZE,
   MARKER_HEIGHT,
@@ -26,7 +27,7 @@ import profileJSON from './big-data.json';
 const priorities = ['unscheduled', 'high', 'normal', 'low'];
 
 const headerHeight = (MARKER_HEIGHT + MARKER_GUTTER_SIZE * 2);
-const threadHeight = (BAR_HEIGHT * 2 + BAR_GUTTER_SIZE * 3)
+const threadHeight = (EVENT_SIZE + BAR_HEIGHT * 2 + BAR_GUTTER_SIZE * 4)
 const canvasHeight =
   headerHeight +
   BAR_SEPARATOR_SIZE * (priorities.length - 1) +
@@ -62,9 +63,11 @@ function eventQueueToPosition(eventQueue) {
         y += BAR_SEPARATOR_SIZE;
       }
       y += BAR_GUTTER_SIZE;
-      cachedEventQueueToPositionMap.set(currentPriority.react, y);
+      cachedEventQueueToPositionMap.set(currentPriority.reactEvents, y);
+      y += EVENT_SIZE + BAR_GUTTER_SIZE;
+      cachedEventQueueToPositionMap.set(currentPriority.reactWork, y);
       y += BAR_HEIGHT + BAR_GUTTER_SIZE;
-      cachedEventQueueToPositionMap.set(currentPriority.other, y);
+      cachedEventQueueToPositionMap.set(currentPriority.otherWork, y);
       y += BAR_HEIGHT + BAR_GUTTER_SIZE;
     });
   }
@@ -79,14 +82,19 @@ function positionToEventQueue(mouseY) {
     const priority = priorities[priorityIndex];
     const currentPriority = events[priority];
 
-    y += BAR_GUTTER_SIZE;
+    y += BAR_GUTTER_SIZE
+    if (mouseY >= y && mouseY <= y + EVENT_SIZE) {
+      return [currentPriority.reactEvents, y];
+    }
+
+    y += EVENT_SIZE + BAR_GUTTER_SIZE;
     if (mouseY >= y && mouseY <= y + BAR_HEIGHT) {
-      return [currentPriority.react, y];
+      return [currentPriority.reactWork, y];
     }
 
     y += BAR_HEIGHT + BAR_GUTTER_SIZE;
     if (mouseY >= y && mouseY <= y + BAR_HEIGHT) {
-      return [currentPriority.other, y];
+      return [currentPriority.otherWork, y];
     }
 
     y += BAR_HEIGHT + BAR_GUTTER_SIZE + BAR_SEPARATOR_SIZE;
@@ -165,7 +173,7 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
       Math.floor(threadHeight),
     );
 
-    y += BAR_GUTTER_SIZE * 3 + BAR_HEIGHT * 2 + BAR_SEPARATOR_SIZE;
+    y += BAR_GUTTER_SIZE * 4 + EVENT_SIZE + BAR_HEIGHT * 2 + BAR_SEPARATOR_SIZE;
   });
 
   y = MARKER_GUTTER_SIZE;
@@ -199,18 +207,49 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
     y += BAR_GUTTER_SIZE;
 
     // Render React stuff that happened at this priority.
-    currentPriority.react.forEach(event => {
+    currentPriority.reactEvents.forEach(event => {
+      const {
+        timestamp,
+        type,
+      } = event;
+
+      const x = timestampToPosition(timestamp, offsetX, zoomLevel);
+      if (x + EVENT_SIZE < 0 || canvasWidth < x) {
+        return; // Not in view
+      }
+
+      let color = null;
+      switch (type) {
+        case 'schedule-render':
+        case 'schedule-state-update':
+          color = '#8c3cf5';
+          break;
+        case 'suspend':
+          color = '#f26b0d';
+          break;
+        default:
+          console.warn(`Unexpected event type "${type}"`);
+          break;
+      }
+
+      if (color !== null) {
+        context.beginPath();
+        context.fillStyle = color;
+        context.lineWidth = 0;
+        context.arc(x, y + EVENT_SIZE / 2, EVENT_SIZE / 2, 0, 2 * Math.PI);
+        context.fill();
+      }
+    });
+
+    y += EVENT_SIZE + BAR_GUTTER_SIZE;
+
+    // Render React stuff that happened at this priority.
+    currentPriority.reactWork.forEach(event => {
       const {
         duration,
         timestamp,
         type,
       } = event;
-
-      if (duration === undefined) {
-        // TODO Support non-duration events (e.g. setState)
-        // Probably best to do this by specifying some minimum duration so they can be hovered?
-        return;
-      }
 
       const width = Math.max(duration * zoomLevel - BAR_HORIZONTAL_SPACING, 0);
       if (width <= 0) {
@@ -234,7 +273,7 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
           color = '#3e87f5';
           break;
         default:
-          console.warn(`Unexpected type "${type}"`);
+          console.warn(`Unexpected work type "${type}"`);
           break;
       }
 
@@ -252,7 +291,7 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
     y += BAR_HEIGHT + BAR_GUTTER_SIZE;
 
     // Render non-React JS that happened at this priority.
-    currentPriority.other.forEach(event => {
+    currentPriority.otherWork.forEach(event => {
       const {
         duration,
         timestamp,
