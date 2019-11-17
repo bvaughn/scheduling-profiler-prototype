@@ -20,7 +20,7 @@ const CANVAS_WIDTH = 800;
 // Time mark intervals vary based on the current zoom range and the time it represents.
 // In Chrome, these seem to range from 70-140 pixels wide.
 // Time wise, they represent intervals of e.g. 1s, 500ms, 200ms, 100ms, 50ms, 20ms.
-// Based on zoom, we should determine which amount to actuall show.
+// Based on zoom, we should determine which amount to actually show.
 function getTimeTickInterval(canvasWidth, unscaledContentWidth, zoomLevel) {
   let interval = INTERVAL_TIMES[0];
   for (let i = 0; i < INTERVAL_TIMES.length; i++) {
@@ -54,9 +54,12 @@ const renderCanvas = (canvas, state, hoveredEvent) => {
     const markerTimestamp = positionToTimestamp(i, offsetX, zoomLevel);
     const markerLabel = Math.round(markerTimestamp);
 
-    context.font = '10px Lucida Grande';
-    context.fillStyle = 'black';
-    context.fillText(`${markerLabel}ms`, i + MARKER_TEXT_OFFSET, 10 + MARKER_TEXT_OFFSET);
+    if (i > 0) {
+      context.font = '10px Lucida Grande';
+      context.fillStyle = 'black';
+      context.textAlign = 'right';
+      context.fillText(`${markerLabel}ms`, i - MARKER_TEXT_OFFSET, 10 + MARKER_TEXT_OFFSET);
+    }
   }
 
   events.forEach(event => {
