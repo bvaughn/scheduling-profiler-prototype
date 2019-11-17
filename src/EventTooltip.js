@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './EventTooltip.module.css';
-import { TOOLTIP_OFFSET } from './constants';
+
+const TOOLTIP_OFFSET = 8;
 
 export default function EventTooltip({ hoveredEvent, state }) {
   if (hoveredEvent == null) {

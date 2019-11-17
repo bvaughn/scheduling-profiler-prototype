@@ -1,7 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { positionToTimestamp } from './usePanAndZoom';
 
-export default function useHoveredEvent({ canvasHeight, canvasWidth, events, state }) {
+export default function useHoveredEvent({
+  canvasHeight,
+  canvasWidth,
+  events,
+  state
+}) {
   const {
     canvasMouseX,
     canvasMouseY,
@@ -9,17 +14,25 @@ export default function useHoveredEvent({ canvasHeight, canvasWidth, events, sta
     zoomLevel,
   } = state;
 
-  const lastHoveredEventRef = useRef(null);
-
-  const timestampAtMouseX = positionToTimestamp(canvasMouseX, offsetX, zoomLevel);
-
-  const isReactEvent = canvasMouseY < canvasHeight / 2;
-
   let hoveredEvent = null;
 
-  useEffect(() => {
-    lastHoveredEventRef.current = hoveredEvent || null;
+  const lastResultRef = useRef({
+    events,
+    hoveredEvent,
   });
+
+  useEffect(() => {
+    lastResultRef.current = {
+      events,
+      hoveredEvent: hoveredEvent || null,
+    };
+  });
+
+  if (events === null) {
+    return null;
+  }
+
+  const timestampAtMouseX = positionToTimestamp(canvasMouseX, offsetX, zoomLevel);
 
   if (
     canvasMouseX >= 0 && canvasMouseX < canvasWidth &&
@@ -27,9 +40,11 @@ export default function useHoveredEvent({ canvasHeight, canvasWidth, events, sta
   ) {
     // Small mouse movements won't change the hovered event,
     // So always start by checking the last hovered event to see if we can avoid doing more work.
-    const lastHoveredEvent = lastHoveredEventRef.current;
+    const lastEvents = lastResultRef.current.events;
+    const lastHoveredEvent = lastResultRef.current.hoveredEvent;
     if (
       lastHoveredEvent !== null &&
+      lastEvents === events &&
       timestampAtMouseX >= lastHoveredEvent.timestamp &&
       timestampAtMouseX <= lastHoveredEvent.timestamp + lastHoveredEvent.duration
     ) {
@@ -38,7 +53,6 @@ export default function useHoveredEvent({ canvasHeight, canvasWidth, events, sta
     }
 
     // Since event data is sorted, we can use a binary search for faster comparison.
-    // TODO We need to pre-separate event streams (React and non-React) for this to work :(
     let indexLow = 0;
     let indexHigh = events.length - 1;
     let index = Math.round(indexHigh / 2);

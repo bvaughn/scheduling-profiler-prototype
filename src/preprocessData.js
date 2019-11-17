@@ -1,5 +1,23 @@
 export default function preprocessData(rawData) {
-  const processedData = [];
+  const processedData = {
+    duration: 0,
+    high: {
+      react: [],
+      other: [],
+    },
+    normal: {
+      react: [],
+      other: [],
+    },
+    low: {
+      react: [],
+      other: [],
+    },
+    unscheduled: {
+      react: [],
+      other: [],
+    },
+  };
 
   const metadata = {
     high: {
@@ -45,6 +63,11 @@ export default function preprocessData(rawData) {
       console.warn('Unexpected priority', currentPriority);
     }
 
+    let currentProcessedGroup = processedData[currentPriority || 'unscheduled'];
+    if (!currentProcessedGroup) {
+      console.warn('Unexpected priority', currentPriority);
+    }
+
     const { cat, name, ph, ts } = currentEvent;
 
     const timestamp = Math.round((ts - firstTime) / 1000);
@@ -81,12 +104,14 @@ export default function preprocessData(rawData) {
             }
 
             if (currentMetadata.hasUncommittedWork && currentMetadata.previousStopTime !== null) {
-              processedData.push({
+              currentProcessedGroup.react.push({
                 type: 'render-idle',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStopTime,
                 duration: timestamp - currentMetadata.previousStopTime,
               });
+
+              processedData.duration = Math.max(processedData.duration, timestamp);
             }
 
             currentMetadata.hasUncommittedWork = true;
@@ -97,12 +122,14 @@ export default function preprocessData(rawData) {
             if (currentMetadata.previousStartTime === null) {
               console.warn('unexpected render stop');
             } else {
-              processedData.push({
+              currentProcessedGroup.react.push({
                 type: 'render-work',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStartTime,
                 duration: timestamp - currentMetadata.previousStartTime,
               });
+
+              processedData.duration = Math.max(processedData.duration, timestamp);
             }
 
             currentMetadata.previousStartTime = null;
@@ -112,12 +139,14 @@ export default function preprocessData(rawData) {
             if (currentMetadata.previousStartTime === null) {
               console.warn('unexpected render stop');
             } else {
-              processedData.push({
+              currentProcessedGroup.react.push({
                 type: 'render-work',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStartTime,
                 duration: timestamp - currentMetadata.previousStartTime
               });
+
+              processedData.duration = Math.max(processedData.duration, timestamp);
             }
 
             currentMetadata.previousStartTime = null;
@@ -127,12 +156,14 @@ export default function preprocessData(rawData) {
             if (currentMetadata.previousStartTime === null) {
               console.warn('unexpected render stop');
             } else {
-              processedData.push({
+              currentProcessedGroup.react.push({
                 type: 'render-work',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStartTime,
                 duration: timestamp - currentMetadata.previousStartTime
               });
+
+              processedData.duration = Math.max(processedData.duration, timestamp);
             }
 
             currentMetadata.hasUncommittedWork = false;
@@ -150,12 +181,14 @@ export default function preprocessData(rawData) {
             if (currentMetadata.previousStartTime === null) {
               console.warn('unexpected commit stop');
             } else {
-              processedData.push({
+              currentProcessedGroup.react.push({
                 type: 'commit-work',
                 priority: currentPriority,
                 timestamp: currentMetadata.previousStartTime,
                 duration: timestamp - currentMetadata.previousStartTime,
               });
+
+              processedData.duration = Math.max(processedData.duration, timestamp);
             }
 
             currentMetadata.hasUncommittedWork = false;
@@ -166,19 +199,23 @@ export default function preprocessData(rawData) {
             // TODO
 
           } else if (name.startsWith('--schedule-render')) {
-            processedData.push({
+            currentProcessedGroup.react.push({
               type: 'schedule-render',
               priority: currentPriority,
               timestamp,
             });
 
+            processedData.duration = Math.max(processedData.duration, timestamp);
+
           } else if (name.startsWith('--schedule-state-update-')) {
-            processedData.push({
+            currentProcessedGroup.react.push({
               type: 'schedule-state-update',
               priority: currentPriority,
               timestamp,
               componentStack: name.substr(24)
             });
+
+            processedData.duration = Math.max(processedData.duration, timestamp);
           }
         }
         break;
@@ -206,12 +243,14 @@ export default function preprocessData(rawData) {
             // TODO This is a flawed approach.
             // FunctionCalls will always be made before/after React starts rendering.
             if (currentMetadata.functionCallStackDepth === 0) {
-              processedData.push({
+              currentProcessedGroup.other.push({
                 type: 'non-react-function-call',
                 priority: currentPriority,
                 timestamp,
                 duration: timestamp - currentMetadata.functionCallStartTime,
               });
+
+              processedData.duration = Math.max(processedData.duration, timestamp);
             }
           }
         }
