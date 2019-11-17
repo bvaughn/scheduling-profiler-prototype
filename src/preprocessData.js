@@ -175,6 +175,21 @@ export default function preprocessData(rawData) {
               console.warn('unexpected commit start');
             }
 
+            if (
+              currentMetadata.hasUncommittedWork &&
+              currentMetadata.previousStopTime !== null &&
+              currentMetadata.previousStopTime < timestamp
+            ) {
+              currentProcessedGroup.react.push({
+                type: 'render-idle',
+                priority: currentPriority,
+                timestamp: currentMetadata.previousStopTime,
+                duration: timestamp - currentMetadata.previousStopTime,
+              });
+
+              processedData.duration = Math.max(processedData.duration, timestamp);
+            }
+
             currentMetadata.previousStartTime = timestamp;
 
           } else if (name === '--commit-stop') {

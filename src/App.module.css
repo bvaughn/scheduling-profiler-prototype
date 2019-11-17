@@ -1,11 +1,27 @@
 .App {
-  padding: 1rem;
+  padding: 0.5rem;
   display: flex;
   flex-direction: row;
   overflow-y: auto;
 }
 
-.Container {
+.LeftColumn {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  margin-right: 1px;
+}
+
+.Label {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: #ffffff;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.RightColumn {
+  flex: 1;
   position: relative;
 }
 

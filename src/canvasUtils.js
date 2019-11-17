@@ -15,7 +15,7 @@ export function configureRetinaCanvas(canvas) {
   return dpr;
 }
 
-export const getCanvasContext = memoize((canvas, scaleCanvas = false) => {
+export const getCanvasContext = memoize((canvas, width, scaleCanvas = true) => {
   const context = canvas.getContext('2d', { alpha: false} );
   if (scaleCanvas) {
     const dpr = configureRetinaCanvas(canvas);

@@ -10,12 +10,13 @@ import preprocessData from './preprocessData';
 import styles from './App.module.css';
 import AutoSizer from "react-virtualized-auto-sizer";
 import {
+  BAR_GUTTER_SIZE,
   BAR_HEIGHT,
   BAR_HORIZONTAL_SPACING,
-  BAR_GUTTER_SIZE,
+  BAR_SEPARATOR_SIZE,
   INTERVAL_TIMES,
-  MARKER_HEIGHT,
   MARKER_GUTTER_SIZE,
+  MARKER_HEIGHT,
   MAX_INTERVAL_SIZE_PX,
 } from './constants';
 
@@ -28,6 +29,7 @@ const headerHeight = (MARKER_HEIGHT + MARKER_GUTTER_SIZE * 2);
 const threadHeight = (BAR_HEIGHT * 2 + BAR_GUTTER_SIZE * 3)
 const canvasHeight =
   headerHeight +
+  BAR_SEPARATOR_SIZE * (priorities.length - 1) +
   threadHeight * priorities.length;
 
 const events = preprocessData(profileJSON);
@@ -56,6 +58,9 @@ function eventQueueToPosition(eventQueue) {
     let y = threadHeight;
     priorities.forEach((priority, priorityIndex) => {
       const currentPriority = events[priority];
+      if (priorityIndex > 0) {
+        y += BAR_SEPARATOR_SIZE;
+      }
       y += BAR_GUTTER_SIZE;
       cachedEventQueueToPositionMap.set(currentPriority.react, y);
       y += BAR_HEIGHT + BAR_GUTTER_SIZE;
@@ -70,50 +75,65 @@ function eventQueueToPosition(eventQueue) {
 function positionToEventQueue(mouseY) {
   let y = headerHeight;
 
-  for (let i = 0; i < priorities.length; i++) {
-    const priority = priorities[i];
+  for (let priorityIndex = 0; priorityIndex < priorities.length; priorityIndex++) {
+    const priority = priorities[priorityIndex];
     const currentPriority = events[priority];
 
     y += BAR_GUTTER_SIZE;
-
     if (mouseY >= y && mouseY <= y + BAR_HEIGHT) {
       return [currentPriority.react, y];
     }
 
     y += BAR_HEIGHT + BAR_GUTTER_SIZE;
-
     if (mouseY >= y && mouseY <= y + BAR_HEIGHT) {
       return [currentPriority.other, y];
     }
 
-    y += BAR_HEIGHT + BAR_GUTTER_SIZE;
+    y += BAR_HEIGHT + BAR_GUTTER_SIZE + BAR_SEPARATOR_SIZE;
   }
 
   return [null, null];
 }
 
-const renderCanvas = memoize((canvas, unscaledContentWidth, offsetX, zoomLevel) => {
-  const context = getCanvasContext(canvas, true);
+const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLevel) => {
+  const context = getCanvasContext(canvas, canvasWidth, true);
 
-  const canvasHeight = canvas.height / 2;
-  const canvasWidth = canvas.width / 2;
-
-  context.fillStyle = '#ffffff';
+  // Fill the canvas with the background color
+  context.fillStyle = '#dddddd';
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  let y = MARKER_GUTTER_SIZE;
+  let y = MARKER_HEIGHT + MARKER_GUTTER_SIZE * 2;
+
+  // Draw priority groups behind everything else
+  priorities.forEach((priority, priorityIndex) => {
+    const currentPriority = events[priority];
+
+    context.fillStyle = '#ffffff';
+    context.fillRect(
+      Math.floor(0),
+      Math.floor(y),
+      Math.floor(canvasWidth),
+      Math.floor(threadHeight),
+    );
+
+    y += BAR_GUTTER_SIZE * 3 + BAR_HEIGHT * 2 + BAR_SEPARATOR_SIZE;
+  });
+
+  y = MARKER_GUTTER_SIZE;
 
   const interval = getTimeTickInterval(zoomLevel);
   const intervalSize = interval * zoomLevel;
   const firstIntervalPosition = 0 - offsetX + Math.floor(offsetX / intervalSize) * intervalSize;
+
+  // Draw time markers on top of the priority groupings
   for (let i = firstIntervalPosition; i < canvasWidth; i += intervalSize) {
-    context.fillStyle = '#dddddd';
-    context.fillRect(i, 0, 1, canvasHeight);
-
-    const markerTimestamp = positionToTimestamp(i, offsetX, zoomLevel);
-    const markerLabel = Math.round(markerTimestamp);
-
     if (i > 0) {
+      context.fillStyle = '#dddddd';
+      context.fillRect(i, 0, 1, canvasHeight);
+
+      const markerTimestamp = positionToTimestamp(i, offsetX, zoomLevel);
+      const markerLabel = Math.round(markerTimestamp);
+
       context.font = `${MARKER_HEIGHT}px Lucida Grande`;
       context.fillStyle = 'black';
       context.textAlign = 'right';
@@ -123,6 +143,7 @@ const renderCanvas = memoize((canvas, unscaledContentWidth, offsetX, zoomLevel) 
 
   y += MARKER_HEIGHT + MARKER_GUTTER_SIZE;
 
+  // Draw events on top of everything
   priorities.forEach((priority, priorityIndex) => {
     const currentPriority = events[priority];
 
@@ -200,7 +221,6 @@ const renderCanvas = memoize((canvas, unscaledContentWidth, offsetX, zoomLevel) 
       }
 
       context.fillStyle = '#656565';
-
       context.fillRect(
         Math.floor(x),
         Math.floor(y),
@@ -209,15 +229,37 @@ const renderCanvas = memoize((canvas, unscaledContentWidth, offsetX, zoomLevel) 
       );
     });
 
-    y += BAR_HEIGHT + BAR_GUTTER_SIZE;
+    y += BAR_HEIGHT + BAR_GUTTER_SIZE + BAR_SEPARATOR_SIZE;
   });
 });
 
 function App() {
+  const labelStyle = {
+    height: `${threadHeight}px`,
+    marginBottom: `${BAR_SEPARATOR_SIZE}px`,
+  };
+
   return (
-    <AutoSizer disableHeight>
-      {({ width }) => <AppWithWidth width={width} />}
-    </AutoSizer>
+    <div className={styles.App}>
+      <div
+        className={styles.LeftColumn}
+        style={{
+          paddingTop: `${headerHeight}px`,
+        }}
+      >
+        <div className={styles.Label} style={labelStyle}>Unscheduled</div>
+        <div className={styles.Label} style={labelStyle}>High</div>
+        <div className={styles.Label} style={labelStyle}>Normal</div>
+        <div className={styles.Label} style={labelStyle}>Low</div>
+      </div>
+      <div className={styles.RightColumn}>
+        <div>
+          <AutoSizer disableHeight>
+            {({ width }) => <AutoSizedCanvas width={width} />}
+          </AutoSizer>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -231,7 +273,7 @@ function getLastEventTime(events) {
     : lastEvent.timestamp;
 }
 
-function AppWithWidth({ width }) {
+function AutoSizedCanvas({ width }) {
   const canvasRef = useRef();
 
   const state = usePanAndZoom(canvasRef, events.duration);
@@ -248,20 +290,15 @@ function AppWithWidth({ width }) {
   useLayoutEffect(() => {
     renderCanvas(
       canvasRef.current,
-      state.unscaledContentWidth,
+      width,
+      canvasHeight,
       state.offsetX,
       state.zoomLevel,
     )
   });
 
   return (
-    <div
-      className={styles.Container}
-      style={{
-        height: canvasHeight,
-        width: width,
-      }}
-    >
+    <Fragment>
       <canvas
         ref={canvasRef}
         className={styles.Canvas}
@@ -278,7 +315,7 @@ function AppWithWidth({ width }) {
         hoveredEvent={hoveredEvent}
         state={state}
       />
-    </div>
+    </Fragment>
   );
 }
 
