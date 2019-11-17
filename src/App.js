@@ -1,34 +1,55 @@
 import React, { Fragment, useLayoutEffect, useRef } from 'react';
-import useMoveAndZoom from './useMoveAndZoom';
+import usePanAndZoom from './usePanAndZoom';
 import { getCanvasContext } from './canvasUtils';
-import { timestampToPosition } from './useMoveAndZoom';
+import { timestampToPosition } from './usePanAndZoom';
 import Tooltip from './Tooltip';
 import preprocessData from './preprocessData';
 import style from './App.module.css';
+import AutoSizer from "react-virtualized-auto-sizer";
+import { BAR_X_GUTTER, INTERVAL_TIMES, MAX_INTERVAL_SIZE_PX } from './constants';
 
 // https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#
-// import profileJSON from './big-data.json';
-import profileJSON from './small-data.json';
+import profileJSON from './big-data.json';
 
 const events = preprocessData(profileJSON);
-console.log('events', events)
 
-const BAR_X_GUTTER = 1;
 const CANVAS_HEIGHT = 100;
 const CANVAS_WIDTH = 800;
 
+// Time mark intervals vary based on the current zoom range and the time it represents.
+// In Chrome, these seem to range from 70-140 pixels wide.
+// Time wise, they represent intervals of e.g. 1s, 500ms, 200ms, 100ms, 50ms, 20ms.
+// Based on zoom, we should determine which amount to actuall show.
+function getTimeTickInterval(canvasWidth, unscaledContentWidth, zoomLevel) {
+  let interval = INTERVAL_TIMES[0];
+  for (let i = 0; i < INTERVAL_TIMES.length; i++) {
+    const currentInteval = INTERVAL_TIMES[i];
+    const pixels = currentInteval * zoomLevel;
+    if (pixels <= MAX_INTERVAL_SIZE_PX) {
+      interval = currentInteval;
+    }
+  }
+  return interval;
+}
+
 const renderCanvas = (canvas, state) => {
-  const context = getCanvasContext(canvas);
+  const context = getCanvasContext(canvas, true);
 
-  const {
-    height: canvasHeight,
-    width: canvasWidth,
-  } = canvas;
+  const canvasHeight = canvas.height / 2;
+  const canvasWidth = canvas.width / 2;
 
-  const { offsetX, zoomLevel } = state;
+  const { offsetX, unscaledContentWidth, zoomLevel } = state;
 
   context.fillStyle = '#ffffff';
   context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const interval = getTimeTickInterval(canvasWidth, unscaledContentWidth, zoomLevel);
+  const intervalSize = Math.round(interval * zoomLevel);
+  const firstIntervalPosition = 0 - offsetX + Math.floor(offsetX / intervalSize) * intervalSize;
+  for (let i = firstIntervalPosition; i < canvasWidth; i += intervalSize) {
+    context.fillStyle = '#eeeeee';
+    context.fillRect(i, 0, 1, canvasHeight);
+  }
 
   events.forEach(event => {
     const {
@@ -57,22 +78,41 @@ const renderCanvas = (canvas, state) => {
     }
 
     let color = null;
+    let y = null;
     switch (type) {
       case 'commit-work':
         color = '#3d87f5';
+        y = 0.2;
         break;
       case 'render-idle':
-        color = 'rgba(0,0,0,.05) ';
+        color = '#f0f0f0';
+        y = 0.2;
         break;
       case 'render-work':
         color = '#e7f0fd';
+        y = 0.2;
+        break;
+      case 'non-react-function-call':
+        color = '#cccccc';
+        y = 0.6;
         break;
       default:
+        console.warn(`Unexpected type "${type}"`);
         break;
     }
 
-    context.fillStyle = color;
-    context.fillRect(Math.floor(x), Math.floor(0), Math.floor(width), Math.floor(canvasHeight));
+    if (color !== null) {
+      context.fillStyle = color;
+    }
+
+    if (y !== null) {
+      context.fillRect(
+        Math.floor(x),
+        Math.floor(y * canvasHeight),
+        Math.floor(width),
+        Math.floor(0.2 * canvasHeight),
+      );
+    }
   });
 
   // TODO Is this necessary?
@@ -80,6 +120,14 @@ const renderCanvas = (canvas, state) => {
 };
 
 function App() {
+  return (
+    <AutoSizer disableHeight>
+      {({ width }) => <AutoSizedCanvas width={width} />}
+    </AutoSizer>
+  );
+}
+
+function AutoSizedCanvas({ width }) {
   const canvasRef = useRef();
 
   const lastEvent = events[events.length - 1];
@@ -88,7 +136,7 @@ function App() {
       ? lastEvent.timestamp + lastEvent.duration
       : lastEvent.timestamp;
 
-  const state = useMoveAndZoom(canvasRef, lastTime);
+  const state = usePanAndZoom(canvasRef, lastTime);
 
   useLayoutEffect(() => renderCanvas(canvasRef.current, state));
 
@@ -98,11 +146,11 @@ function App() {
         ref={canvasRef}
         className={style.Canvas}
         height={CANVAS_HEIGHT}
-        width={CANVAS_WIDTH}
+        width={width}
       />
       <Tooltip
         canvasHeight={CANVAS_HEIGHT}
-        canvasWidth={CANVAS_WIDTH}
+        canvasWidth={width}
         events={events}
         state={state}
       />

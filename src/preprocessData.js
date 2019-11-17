@@ -3,21 +3,29 @@ export default function preprocessData(rawData) {
 
   const metadata = {
     high: {
+      functionCallStartTime: null,
+      functionCallStackDepth: 0,
       hasUncommittedWork: false,
       previousStartTime: null,
       previousStopTime: null,
     },
     normal: {
+      functionCallStartTime: null,
+      functionCallStackDepth: 0,
       hasUncommittedWork: false,
       previousStartTime: null,
       previousStopTime: null,
     },
     low: {
+      functionCallStartTime: null,
+      functionCallStackDepth: 0,
       hasUncommittedWork: false,
       previousStartTime: null,
       previousStopTime: null,
     },
     unscheduled: {
+      functionCallStartTime: null,
+      functionCallStackDepth: 0,
       hasUncommittedWork: false,
       previousStartTime: null,
       previousStopTime: null,
@@ -25,7 +33,6 @@ export default function preprocessData(rawData) {
   };
 
   let currentPriority = null;
-  let functionCallStackDepth = 0;
 
   // Data is sorted by time so, so the first entry always marks the start of our session.
   let firstTime = rawData[0].ts;
@@ -43,6 +50,10 @@ export default function preprocessData(rawData) {
     const timestamp = Math.round((ts - firstTime) / 1000);
 
     // TODO Combine yields/starts that are closer than some threshold with the previous event to reduce renders.
+
+    // TODO Make second pass over data to determine when JS is executing that isn't React.
+    // The easiest way to do this may be to gather both the React ranges and the JS ranges in the first past,
+    // and then subtract the React ranges from the JS ranges during a second pass...
 
     switch (ph) {
       case "R":
@@ -173,17 +184,35 @@ export default function preprocessData(rawData) {
         break;
       case "B": // Begin
         if (name === "FunctionCall") {
-          functionCallStackDepth++;
+          // TODO This is a flawed approach.
+          // FunctionCalls will always be made before/after React starts rendering.
+          if (currentMetadata.previousStartTime === null) {
+            currentMetadata.functionCallStackDepth++;
+
+            if (currentMetadata.functionCallStackDepth === 1) {
+              currentMetadata.functionCallStartTime = timestamp;
+            }
+          }
         }
         break;
       case "E": // End
         if (name === "FunctionCall") {
-          if (functionCallStackDepth === 0) {
-            console.warn('unexpected "FunctionCall" end');
-          }
-          functionCallStackDepth--;
-          if (functionCallStackDepth === 0) {
-            // TODO
+          if (currentMetadata.previousStartTime === null) {
+            if (currentMetadata.functionCallStackDepth === 0) {
+              console.warn('unexpected "FunctionCall" end');
+            }
+            currentMetadata.functionCallStackDepth--;
+
+            // TODO This is a flawed approach.
+            // FunctionCalls will always be made before/after React starts rendering.
+            if (currentMetadata.functionCallStackDepth === 0) {
+              processedData.push({
+                type: 'non-react-function-call',
+                priority: currentPriority,
+                timestamp,
+                duration: timestamp - currentMetadata.functionCallStartTime,
+              });
+            }
           }
         }
         break;

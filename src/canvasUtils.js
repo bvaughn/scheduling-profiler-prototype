@@ -15,11 +15,13 @@ export function configureRetinaCanvas(canvas) {
   return dpr;
 }
 
-export const getCanvasContext = memoize(canvas => {
+export const getCanvasContext = memoize((canvas, scaleCanvas = false) => {
   const context = canvas.getContext('2d', { alpha: false} );
-  const dpr = configureRetinaCanvas(canvas);
-  // Scale all drawing operations by the dpr, so you don't have to worry about the difference.
-  context.scale(dpr, dpr);
+  if (scaleCanvas) {
+    const dpr = configureRetinaCanvas(canvas);
+    // Scale all drawing operations by the dpr, so you don't have to worry about the difference.
+    context.scale(dpr, dpr);
+  }
   return context;
 });
 

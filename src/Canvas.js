@@ -1,5 +1,5 @@
 import React, { Fragment, useLayoutEffect, useRef } from 'react';
-import useMoveAndZoom from './useMoveAndZoom';
+import usePanAndZoom from './usePanAndZoom';
 
 export default function Canvas({
   height,
@@ -10,7 +10,7 @@ export default function Canvas({
 }) {
   const canvasRef = useRef();
  
-  const state = useMoveAndZoom(canvasRef, scrollWidth);
+  const state = usePanAndZoom(canvasRef, scrollWidth);
 
   useLayoutEffect(() => renderCanvas(canvasRef.current, state));
 
