@@ -53,11 +53,13 @@ export default function useHoveredEvent({
     }
 
     // Since event data is sorted, we can use a binary search for faster comparison.
-    let indexLow = 0;
-    let indexHigh = eventQueue.length - 1;
-    let index = Math.round(indexHigh / 2);
-    while (index < indexHigh && index > indexLow && hoveredEvent === null) {
-      const event = eventQueue[index];
+
+    let start = 0;
+    let end = eventQueue.length - 1;
+    while (start <= end) {
+      const middle = Math.floor((start + end) / 2);
+
+      const event = eventQueue[middle];
       const {
         duration,
         timestamp: startTime
@@ -66,16 +68,15 @@ export default function useHoveredEvent({
       const stopTime = startTime + duration;
 
       // TODO This won't find small things (like state-updates)
-      const match = timestampAtMouseX >= startTime && timestampAtMouseX <= stopTime;
-
-      if (match) {
+      if (timestampAtMouseX >= startTime && timestampAtMouseX <= stopTime) {
         hoveredEvent = event;
-      } else if (timestampAtMouseX < startTime) {
-        indexHigh = index;
-        index = indexLow + Math.round((indexHigh - indexLow) / 2);
+        break;
+      }
+
+      if (stopTime < timestampAtMouseX) {
+        start = middle + 1;
       } else {
-        indexLow = index;
-        index = indexLow + Math.round((indexHigh - indexLow) / 2);
+        end = middle - 1;
       }
     }
   }
