@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { positionToTimestamp } from './usePanAndZoom';
 import { EVENT_SIZE } from './constants';
 
-export default function useHoveredEvent({
+export default function useInteractiveEvents({
+  canvasRef,
   canvasHeight,
   canvasWidth,
   eventQueue,
@@ -17,6 +18,8 @@ export default function useHoveredEvent({
 
   let hoveredEvent = null;
 
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
   const lastResultRef = useRef({
     eventQueue,
     hoveredEvent,
@@ -29,8 +32,18 @@ export default function useHoveredEvent({
     };
   });
 
+  useEffect(() => {
+    const onClick = () => {
+      setSelectedEvent(lastResultRef.current.hoveredEvent || null);
+    };
+    canvasRef.current.addEventListener('click', onClick);
+    return () => {
+      canvasRef.current.removeEventListener('click', onClick);
+    };
+  }, []);
+
   if (eventQueue === null) {
-    return null;
+    return [null, selectedEvent];
   }
 
   const eventSizeInMS = EVENT_SIZE / zoomLevel;
@@ -44,7 +57,8 @@ export default function useHoveredEvent({
     // So always start by checking the last hovered event to see if we can avoid doing more work.
     const lastEvents = lastResultRef.current.eventQueue;
     const lastHoveredEvent = lastResultRef.current.hoveredEvent;
-    // TODO Handle events too
+
+    // TODO This short circuit should handle events without durations too
     if (
       lastHoveredEvent !== null &&
       lastEvents === eventQueue &&
@@ -52,7 +66,8 @@ export default function useHoveredEvent({
       timestampAtMouseX <= lastHoveredEvent.timestamp + lastHoveredEvent.duration
     ) {
       hoveredEvent = lastHoveredEvent;
-      return lastHoveredEvent;
+
+      return [hoveredEvent, selectedEvent];
     }
 
     // Since event data is sorted, we can use a binary search for faster comparison.
@@ -94,5 +109,5 @@ export default function useHoveredEvent({
     }
   }
 
-  return hoveredEvent;
+  return [hoveredEvent, selectedEvent];
 }

@@ -1,15 +1,14 @@
 import React from 'react';
-import styles from './EventTooltip.module.css';
+import styles from './SelectedEvent.module.css';
 
 const TOOLTIP_OFFSET = 8;
 
-export default function EventTooltip({ hoveredEvent, state }) {
-  if (hoveredEvent == null) {
+export default function SelectedEvent({ selectedEvent, width }) {
+  if (selectedEvent == null) {
     return null;
   }
 
-  const { canvasMouseY, canvasMouseX } = state;
-  const { componentStack, duration, timestamp, type } = hoveredEvent;
+  const { componentStack, duration, timestamp, type } = selectedEvent;
 
   let label = null;
   switch (type) {
@@ -39,17 +38,8 @@ export default function EventTooltip({ hoveredEvent, state }) {
   }
 
   return (
-    <div
-      className={styles.Tooltip}
-      style={{
-        position: 'absolute',
-        top: canvasMouseY + TOOLTIP_OFFSET,
-        left: canvasMouseX + TOOLTIP_OFFSET,
-      }}
-    >
-      {duration !== undefined
-        ? `${duration}ms (${label})`
-        : `${label}`}
+    <div className={styles.SelectedEvent} style={{width}}>
+      {label} {duration !== undefined ? `for ${duration}ms` : ''} at {timestamp}ms
       {componentStack && (
         <pre className={styles.ComponentStack}>    {componentStack.trim()}</pre>
       )}

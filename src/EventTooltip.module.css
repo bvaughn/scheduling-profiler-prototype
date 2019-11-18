@@ -4,5 +4,8 @@
   border-radius: 0.25rem;
   padding: 0.25rem 0.5rem;
   user-select: none;
-  white-space: pre;
+}
+
+.ComponentStack {
+  font-size: 10px;
 }

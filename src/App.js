@@ -3,9 +3,10 @@ import memoize from 'memoize-one';
 import usePanAndZoom from './usePanAndZoom';
 import { getCanvasContext } from './canvasUtils';
 import { positionToTimestamp, timestampToPosition } from './usePanAndZoom';
-import useHoveredEvent from './useHoveredEvent';
+import useInteractiveEvents from './useInteractiveEvents';
 import EventHighlight from './EventHighlight';
 import EventTooltip from './EventTooltip';
+import SelectedEvent from './SelectedEvent';
 import preprocessData from './preprocessData';
 import styles from './App.module.css';
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -251,10 +252,10 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
         type,
       } = event;
 
-      const width = Math.max(duration * zoomLevel - BAR_HORIZONTAL_SPACING, 0);
-      if (width <= 0) {
-        return; // Too small to render at this zoom level
-      }
+      // We could change the max to 0 and just skip over rendering anything that small,
+      // but this has the effect of making the chart look very empty when zoomed out.
+      // So long as perf is okay- it might be best to err on the side of showing things.
+      const width = Math.max(duration * zoomLevel - BAR_HORIZONTAL_SPACING, 1);
 
       const x = timestampToPosition(timestamp, offsetX, zoomLevel);
       if (x + width < 0 || canvasWidth < x) {
@@ -267,7 +268,10 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
           color = '#ff3633';
           break;
         case 'render-idle':
-          color = context.createPattern(getIdlePattern(), 'repeat');
+          // We could render idle time as diagonal hashes.
+          // This looks nicer when zoomed in, but not so nice when zoomed out.
+          // color = context.createPattern(getIdlePattern(), 'repeat');
+          color = '#e7f0fe';
           break;
         case 'render-work':
           color = '#3e87f5';
@@ -368,7 +372,8 @@ function AutoSizedCanvas({ width }) {
 
   const [eventQueue, y] = positionToEventQueue(state.canvasMouseY);
 
-  const hoveredEvent = useHoveredEvent({
+  const [hoveredEvent, selectedEvent] = useInteractiveEvents({
+    canvasRef,
     canvasHeight,
     canvasWidth: width,
     eventQueue,
@@ -402,6 +407,10 @@ function AutoSizedCanvas({ width }) {
       <EventTooltip
         hoveredEvent={hoveredEvent}
         state={state}
+      />
+      <SelectedEvent
+        selectedEvent={selectedEvent}
+        width={width}
       />
     </Fragment>
   );
