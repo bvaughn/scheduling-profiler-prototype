@@ -17,10 +17,10 @@ export default function EventHighlight({ height, hoveredEvent, state, y }) {
         className={styles.Highlight}
         style={{
           position: 'absolute',
-          top: y - 1,
-          left: Math.floor(timestampToPosition(timestamp, offsetX, zoomLevel)) - EVENT_SIZE / 2 - 1,
-          width: `${EVENT_SIZE + 2}px`,
-          height: `${EVENT_SIZE + 2}px`,
+          top: y,
+          left: Math.floor(timestampToPosition(timestamp, offsetX, zoomLevel)) - EVENT_SIZE / 2,
+          width: `${EVENT_SIZE}px`,
+          height: `${EVENT_SIZE}px`,
           borderRadius: '50%',
         }}
       />
@@ -36,10 +36,10 @@ export default function EventHighlight({ height, hoveredEvent, state, y }) {
         className={styles.Highlight}
         style={{
           position: 'absolute',
-          top: y - 1,
-          left: Math.floor(timestampToPosition(timestamp, offsetX, zoomLevel)) - 1,
-          width: Math.floor(width) + 2,
-          height: height + 2,
+          top: y,
+          left: Math.floor(timestampToPosition(timestamp, offsetX, zoomLevel)),
+          width: Math.floor(width),
+          height: height,
         }}
       />
     );
