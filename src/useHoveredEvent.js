@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { positionToTimestamp } from './usePanAndZoom';
 import { EVENT_SIZE } from './constants';
 
-export default function useInteractiveEvents({
+export default function useHoveredEvent({
   canvasRef,
   canvasHeight,
   canvasWidth,
@@ -36,12 +36,11 @@ export default function useInteractiveEvents({
     const onClick = () => {
       setSelectedEvent(lastResultRef.current.hoveredEvent || null);
     };
-    const canvas = canvasRef.current;
-    canvas.addEventListener('click', onClick);
+    canvasRef.current.addEventListener('click', onClick);
     return () => {
-      canvas.removeEventListener('click', onClick);
+      canvasRef.current.removeEventListener('click', onClick);
     };
-  }, [canvasRef]);
+  }, []);
 
   if (eventQueue === null) {
     return [null, selectedEvent];

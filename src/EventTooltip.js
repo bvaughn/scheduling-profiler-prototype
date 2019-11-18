@@ -9,7 +9,7 @@ export default function EventTooltip({ hoveredEvent, state }) {
   }
 
   const { canvasMouseY, canvasMouseX } = state;
-  const { componentStack, duration, timestamp, type } = hoveredEvent;
+  const { componentStack, duration, type } = hoveredEvent;
 
   let label = null;
   switch (type) {

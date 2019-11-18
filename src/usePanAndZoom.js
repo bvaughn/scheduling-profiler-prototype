@@ -1,5 +1,4 @@
 import { useEffect, useReducer } from 'react';
-import { flushSync } from 'react-dom';
 import { getCanvasMousePos } from './canvasUtils';
 import { WHEEL_DELTA_THRESHOLD, MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL } from './constants';
 

@@ -1,8 +1,6 @@
 import React from 'react';
 import styles from './SelectedEvent.module.css';
 
-const TOOLTIP_OFFSET = 8;
-
 export default function SelectedEvent({ selectedEvent, width }) {
   if (selectedEvent == null) {
     return null;

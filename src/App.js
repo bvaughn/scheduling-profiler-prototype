@@ -52,6 +52,7 @@ function getTimeTickInterval(zoomLevel) {
   return interval;
 }
 
+/*
 let cachedEventQueueToPositionMap = null;
 function eventQueueToPosition(eventQueue) {
   if (cachedEventQueueToPositionMap === null) {
@@ -75,6 +76,7 @@ function eventQueueToPosition(eventQueue) {
 
   return cachedEventQueueToPositionMap.get(eventQueue) || null;
 }
+*/
 
 function positionToEventQueue(mouseY) {
   let y = headerHeight;
@@ -104,6 +106,7 @@ function positionToEventQueue(mouseY) {
   return [null, null];
 }
 
+/*
 let cachedIdlePattern = null;
 function getIdlePattern() {
   if (cachedIdlePattern === null) {
@@ -152,6 +155,7 @@ function getIdlePattern() {
 
   return cachedIdlePattern;
 }
+*/
 
 const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLevel) => {
   const context = getCanvasContext(canvas, canvasWidth, true);
@@ -163,9 +167,7 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
   let y = MARKER_HEIGHT + MARKER_GUTTER_SIZE * 2;
 
   // Draw priority groups behind everything else
-  priorities.forEach((priority, priorityIndex) => {
-    const currentPriority = events[priority];
-
+  priorities.forEach(() => {
     context.fillStyle = '#ffffff';
     context.fillRect(
       Math.floor(0),
@@ -296,11 +298,7 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
 
     // Render non-React JS that happened at this priority.
     currentPriority.otherWork.forEach(event => {
-      const {
-        duration,
-        timestamp,
-        type,
-      } = event;
+      const { duration, timestamp } = event;
 
       const width = Math.max(duration * zoomLevel - BAR_HORIZONTAL_SPACING, 0);
       if (width <= 0) {
@@ -353,16 +351,6 @@ function App() {
       </div>
     </div>
   );
-}
-
-function getLastEventTime(events) {
-  const lastEvent = events[events.length - 1];
-  if (lastEvent == null) {
-    return 0;
-  }
-  return lastEvent.duration !== undefined
-    ? lastEvent.timestamp + lastEvent.duration
-    : lastEvent.timestamp;
 }
 
 function AutoSizedCanvas({ width }) {
