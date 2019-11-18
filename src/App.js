@@ -1,4 +1,4 @@
-import React, { Fragment, useLayoutEffect, useRef } from 'react';
+import React, { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import memoize from 'memoize-one';
 import usePanAndZoom from './usePanAndZoom';
 import { getCanvasContext } from './canvasUtils';
@@ -22,9 +22,6 @@ import {
   MAX_INTERVAL_SIZE_PX,
 } from './constants';
 
-// https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#
-import profileJSON from './big-data.json';
-
 const priorities = ['unscheduled', 'high', 'normal', 'low'];
 
 const headerHeight = (MARKER_HEIGHT + MARKER_GUTTER_SIZE * 2);
@@ -33,8 +30,6 @@ const canvasHeight =
   headerHeight +
   BAR_SEPARATOR_SIZE * (priorities.length - 1) +
   threadHeight * priorities.length;
-
-const events = preprocessData(profileJSON);
 
 // Time mark intervals vary based on the current zoom range and the time it represents.
 // In Chrome, these seem to range from 70-140 pixels wide.
@@ -60,7 +55,7 @@ function eventQueueToPosition(eventQueue) {
 
     let y = threadHeight;
     priorities.forEach((priority, priorityIndex) => {
-      const currentPriority = events[priority];
+      const currentPriority = data[priority];
       if (priorityIndex > 0) {
         y += BAR_SEPARATOR_SIZE;
       }
@@ -78,29 +73,31 @@ function eventQueueToPosition(eventQueue) {
 }
 */
 
-function positionToEventQueue(mouseY) {
-  let y = headerHeight;
+function positionToEventQueue(data, mouseY) {
+  if (data != null) {
+    let y = headerHeight;
 
-  for (let priorityIndex = 0; priorityIndex < priorities.length; priorityIndex++) {
-    const priority = priorities[priorityIndex];
-    const currentPriority = events[priority];
+    for (let priorityIndex = 0; priorityIndex < priorities.length; priorityIndex++) {
+      const priority = priorities[priorityIndex];
+      const currentPriority = data[priority];
 
-    y += BAR_GUTTER_SIZE
-    if (mouseY >= y && mouseY <= y + EVENT_SIZE) {
-      return [currentPriority.reactEvents, y];
+      y += BAR_GUTTER_SIZE
+      if (mouseY >= y && mouseY <= y + EVENT_SIZE) {
+        return [currentPriority.reactEvents, y];
+      }
+
+      y += EVENT_SIZE + BAR_GUTTER_SIZE;
+      if (mouseY >= y && mouseY <= y + BAR_HEIGHT) {
+        return [currentPriority.reactWork, y];
+      }
+
+      y += BAR_HEIGHT + BAR_GUTTER_SIZE;
+      if (mouseY >= y && mouseY <= y + BAR_HEIGHT) {
+        return [currentPriority.otherWork, y];
+      }
+
+      y += BAR_HEIGHT + BAR_GUTTER_SIZE + BAR_SEPARATOR_SIZE;
     }
-
-    y += EVENT_SIZE + BAR_GUTTER_SIZE;
-    if (mouseY >= y && mouseY <= y + BAR_HEIGHT) {
-      return [currentPriority.reactWork, y];
-    }
-
-    y += BAR_HEIGHT + BAR_GUTTER_SIZE;
-    if (mouseY >= y && mouseY <= y + BAR_HEIGHT) {
-      return [currentPriority.otherWork, y];
-    }
-
-    y += BAR_HEIGHT + BAR_GUTTER_SIZE + BAR_SEPARATOR_SIZE;
   }
 
   return [null, null];
@@ -157,7 +154,7 @@ function getIdlePattern() {
 }
 */
 
-const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLevel) => {
+const renderCanvas = memoize((data, canvas, canvasWidth, canvasHeight, offsetX, zoomLevel) => {
   const context = getCanvasContext(canvas, canvasWidth, true);
 
   // Fill the canvas with the background color
@@ -178,6 +175,10 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
 
     y += BAR_GUTTER_SIZE * 4 + EVENT_SIZE + BAR_HEIGHT * 2 + BAR_SEPARATOR_SIZE;
   });
+
+  if (data == null) {
+    return null;
+  }
 
   y = MARKER_GUTTER_SIZE;
 
@@ -205,7 +206,7 @@ const renderCanvas = memoize((canvas, canvasWidth, canvasHeight, offsetX, zoomLe
 
   // Draw events on top of everything
   priorities.forEach((priority, priorityIndex) => {
-    const currentPriority = events[priority];
+    const currentPriority = data[priority];
 
     y += BAR_GUTTER_SIZE;
 
@@ -329,6 +330,16 @@ function App() {
     marginBottom: `${BAR_SEPARATOR_SIZE}px`,
   };
 
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetch('./big-data.json')
+      .then(data => data.json())
+      .then(data => {
+        setData(preprocessData(data));
+      });
+  }, []);
+
   return (
     <div className={styles.App}>
       <div
@@ -345,7 +356,7 @@ function App() {
       <div className={styles.RightColumn}>
         <div>
           <AutoSizer disableHeight>
-            {({ width }) => <AutoSizedCanvas width={width} />}
+            {({ width }) => <AutoSizedCanvas data={data} width={width} />}
           </AutoSizer>
         </div>
       </div>
@@ -353,12 +364,12 @@ function App() {
   );
 }
 
-function AutoSizedCanvas({ width }) {
+function AutoSizedCanvas({ data, width }) {
   const canvasRef = useRef();
 
-  const state = usePanAndZoom(canvasRef, events.duration);
+  const state = usePanAndZoom(canvasRef, data != null ? data.duration : 0);
 
-  const [eventQueue, y] = positionToEventQueue(state.canvasMouseY);
+  const [eventQueue, y] = positionToEventQueue(data, state.canvasMouseY);
 
   const [hoveredEvent, selectedEvent] = useInteractiveEvents({
     canvasRef,
@@ -370,6 +381,7 @@ function AutoSizedCanvas({ width }) {
 
   useLayoutEffect(() => {
     renderCanvas(
+      data,
       canvasRef.current,
       width,
       canvasHeight,
